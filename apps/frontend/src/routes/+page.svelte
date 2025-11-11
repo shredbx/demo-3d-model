@@ -12,7 +12,7 @@
 	// Available bike models/styles with per-model configurations
 	const MODELS = {
 		style1: {
-			name: 'Dirt Bike',
+			name: 'KTM Dirt Bike',
 			path: '/models/ktm-dirt-bike.glb',
 			description: 'KTM Dirt Bike (Blue)',
 			camera: {
@@ -24,21 +24,45 @@
 			}
 		},
 		style2: {
-			name: 'Road Bike',
-			path: '/models/style-2.glb',
-			description: 'Road Bike (Street Style)',
+			name: 'Ducati Streetfighter',
+			path: '/models/ducati-streetfighter.glb',
+			description: 'Ducati Streetfighter V4 S',
 			camera: {
-				position: { x: 6, y: 2, z: 8 }, // Further zoom for road bike
+				position: { x: 5, y: 2, z: 7 },
 				minDistance: 4,
 				maxDistance: 12,
-				scale: 4, // Smaller scale if model is huge
-				positionOffset: { x: 0, y: 0.5, z: 0 } // Adjust Y if needed
+				scale: 3.5,
+				positionOffset: { x: 0, y: 1, z: 0 }
+			}
+		},
+		style3: {
+			name: 'Suzuki GSX 750',
+			path: '/models/suzuki-gsx-750.glb',
+			description: 'Suzuki GSX 750 Sport Bike',
+			camera: {
+				position: { x: 5, y: 2, z: 7 },
+				minDistance: 4,
+				maxDistance: 12,
+				scale: 3.5,
+				positionOffset: { x: 0, y: 1, z: 0 }
+			}
+		},
+		style4: {
+			name: 'Yamaha Cruiser',
+			path: '/models/yamaha-stryker.glb',
+			description: 'Yamaha Stryker Cruiser',
+			camera: {
+				position: { x: 6, y: 2, z: 8 },
+				minDistance: 4,
+				maxDistance: 12,
+				scale: 3.5,
+				positionOffset: { x: 0, y: 0.8, z: 0 }
 			}
 		}
 	};
 
 	// Current selected style
-	let currentStyle = $state<'style1' | 'style2'>('style1');
+	let currentStyle = $state<'style1' | 'style2' | 'style3' | 'style4'>('style1');
 	let currentModel: any = null; // Store current loaded model
 	let scene: THREE.Scene;
 	let camera: THREE.PerspectiveCamera;
@@ -167,7 +191,7 @@
 
 	// Watch for style changes and load new model
 	// Use untrack to prevent infinite loops when updating previousStyle
-	let previousStyle: 'style1' | 'style2' = 'style1';
+	let previousStyle: 'style1' | 'style2' | 'style3' | 'style4' = 'style1';
 	$effect(() => {
 		console.log('🔄 $effect triggered!');
 		console.log('  scene:', !!scene);
@@ -309,7 +333,7 @@
 				}}
 				title={MODELS.style1.description}
 			>
-				🏍️ Dirt Bike
+				🏍️ KTM Dirt Bike
 			</button>
 			<button
 				class="style-btn"
@@ -321,7 +345,31 @@
 				}}
 				title={MODELS.style2.description}
 			>
-				🏍️ Road Bike
+				🏍️ Ducati Streetfighter
+			</button>
+			<button
+				class="style-btn"
+				class:active={currentStyle === 'style3'}
+				onclick={() => {
+					console.log('🖱️ Button clicked! Previous:', currentStyle);
+					currentStyle = 'style3';
+					console.log('🖱️ Button clicked! New:', currentStyle);
+				}}
+				title={MODELS.style3.description}
+			>
+				🏍️ Suzuki GSX 750
+			</button>
+			<button
+				class="style-btn"
+				class:active={currentStyle === 'style4'}
+				onclick={() => {
+					console.log('🖱️ Button clicked! Previous:', currentStyle);
+					currentStyle = 'style4';
+					console.log('🖱️ Button clicked! New:', currentStyle);
+				}}
+				title={MODELS.style4.description}
+			>
+				🏍️ Yamaha Cruiser
 			</button>
 		</div>
 
