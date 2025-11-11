@@ -127,6 +127,24 @@
 									}
 								}
 
+								// Ducati customization - make it red
+								if (modelPath.includes('ducati')) {
+									// Apply Ducati red to body panels
+									if (material.color) {
+										const hex = material.color.getHex();
+										const r = (hex >> 16) & 0xff;
+										const g = (hex >> 8) & 0xff;
+										const b = hex & 0xff;
+
+										// Replace any bright colors (body panels) with Ducati red
+										if ((r > 150 || g > 150 || b > 150) && !(r < 50 && g < 50 && b < 50)) {
+											// Not already dark (keep black parts black)
+											material.color.setHex(0xDC0000); // Ducati red
+											console.log('Applied Ducati red to body panel');
+										}
+									}
+								}
+
 								// If material has a texture map with KTM logo, reduce its opacity
 								if (material.map && material.map.name && material.map.name.toLowerCase().includes('ktm')) {
 									material.opacity = 0.3;
@@ -152,7 +170,19 @@
 				const newCenter = box.getCenter(new THREE.Vector3());
 				model.position.sub(newCenter);
 
-				// Apply position offset from config
+				// Per-model ground positioning adjustments
+				const minY = box.min.y;
+
+				if (modelPath.includes('ktm')) {
+					// KTM: Use original positioning (no ground adjustment)
+					// Just apply the config offsets directly
+				} else if (modelPath.includes('ducati') || modelPath.includes('suzuki') || modelPath.includes('yamaha')) {
+					// Ducati, Suzuki, Yamaha: Apply half ground adjustment
+					// They were sinking before, now too high, so use halfway point
+					model.position.y = -minY / 2;
+				}
+
+				// Apply additional position offset from config
 				model.position.x += config.positionOffset.x;
 				model.position.y += config.positionOffset.y;
 				model.position.z += config.positionOffset.z;
@@ -213,7 +243,26 @@
 	onMount(() => {
 		// Scene setup
 		scene = new THREE.Scene();
-		scene.background = new THREE.Color(0xe0e8f0); // Light blue-gray
+		scene.background = new THREE.Color(0x2a2a2a); // Dark gray garage
+
+		// Add ground plane (garage floor)
+		const groundGeometry = new THREE.PlaneGeometry(100, 100);
+		const groundMaterial = new THREE.MeshStandardMaterial({
+			color: 0x3a3a3a,
+			roughness: 0.8,
+			metalness: 0.2
+		});
+		const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+		ground.rotation.x = -Math.PI / 2; // Make it horizontal
+		ground.position.y = 0; // At ground level
+		ground.receiveShadow = true;
+		scene.add(ground);
+
+		// Add subtle grid for garage floor effect
+		const gridHelper = new THREE.GridHelper(100, 100, 0x555555, 0x444444);
+		gridHelper.position.y = 0.01; // Slightly above ground to prevent z-fighting
+		scene.add(gridHelper);
+
 		// Fog removed for better visibility
 
 		// Camera setup with fixed canvas dimensions
@@ -314,7 +363,7 @@
 	<!-- Hero Content -->
 	<div class="hero-content">
 		<h1>MotoMoto</h1>
-		<p class="tagline">Transform Your Bike into 3D</p>
+		<p class="tagline">Virtual 3D Moto Models</p>
 		<!-- Temporarily hidden
 		<div class="subtitle">
 			Upload a photo of your dirt bike and watch it come alive in interactive 3D
@@ -519,7 +568,7 @@
 		align-items: center;
 		justify-content: center;
 		z-index: 10; /* Above canvas */
-		background: rgba(224, 232, 240, 0.95); /* Match scene background with slight transparency */
+		background: rgba(42, 42, 42, 0.95); /* Match dark garage background with slight transparency */
 		border-radius: 12px;
 		pointer-events: none;
 	}
