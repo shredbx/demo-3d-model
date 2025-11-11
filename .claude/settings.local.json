@@ -51,7 +51,10 @@
       "WebFetch(domain:developers.cloudflare.com)",
       "mcp__memory__create_entities",
       "mcp__memory__open_nodes",
-      "Skill(docs-stories)"
+      "Skill(docs-stories)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_wait_for"
     ],
     "ask": [
       "Bash(sudo:*)",
@@ -92,7 +95,7 @@
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
-"cloudflare",
+    "cloudflare",
     "sequential-thinking",
     "memory",
     "playwright",

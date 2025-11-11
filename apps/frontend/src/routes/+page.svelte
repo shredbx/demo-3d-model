@@ -571,7 +571,7 @@
 
 	.hero-content {
 		position: absolute;
-		top: 5%;
+		top: 2%;
 		left: 50%;
 		transform: translateX(-50%);
 		text-align: center;
@@ -581,7 +581,7 @@
 	}
 
 	h1 {
-		font-size: clamp(3rem, 8vw, 6rem);
+		font-size: clamp(2.5rem, 6vw, 4rem);
 		font-weight: 900;
 		background: linear-gradient(135deg, #00d4ff 0%, #0099ff 50%, #0066ff 100%);
 		-webkit-background-clip: text;
@@ -603,9 +603,9 @@
 	}
 
 	.tagline {
-		font-size: clamp(1.2rem, 3vw, 2rem);
+		font-size: clamp(1rem, 2.5vw, 1.5rem);
 		color: #8892b0;
-		margin: 1rem 0 0.5rem;
+		margin: 0.5rem 0 0.25rem;
 		font-weight: 500;
 	}
 
@@ -618,20 +618,20 @@
 	}
 
 	.style-toggle {
-		margin-top: 2rem;
+		margin-top: 1rem;
 		display: flex;
-		gap: 1rem;
+		gap: 0.75rem;
 		justify-content: center;
-		flex-wrap: wrap;
+		flex-wrap: nowrap; /* One line on desktop */
 	}
 
 	.style-btn {
-		padding: 0.75rem 1.5rem;
+		padding: 0.5rem 1rem;
 		background: rgba(0, 0, 0, 0.8);
 		border: 2px solid rgba(0, 212, 255, 0.3);
-		border-radius: 8px;
+		border-radius: 6px;
 		color: #8892b0;
-		font-size: 0.9rem;
+		font-size: 0.85rem;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.3s ease;
@@ -654,20 +654,24 @@
 
 	.viewer-container {
 		position: absolute;
-		top: 40%;
+		top: 30%;
 		left: 50%;
 		transform: translateX(-50%);
 		display: flex;
 		align-items: center;
 		gap: 1.5rem;
-		z-index: 10;
+		z-index: 5;
+		min-width: fit-content;
 	}
 
 	.camera-controls {
 		display: flex;
 		flex-direction: column;
-		gap: 1rem;
+		gap: 0.75rem;
 		z-index: 20;
+		flex-shrink: 0;
+		height: 400px; /* Match canvas height */
+		justify-content: center; /* Center controls vertically */
 	}
 
 	.control-group {
@@ -678,11 +682,13 @@
 		padding: 0.5rem;
 		border-radius: 8px;
 		border: 1px solid rgba(0, 212, 255, 0.3);
+		position: relative; /* Create stacking context */
+		z-index: 1; /* Ensure it's above canvas */
 	}
 
 	.control-btn {
-		width: 40px;
-		height: 40px;
+		width: 32px;
+		height: 32px;
 		background: rgba(0, 0, 0, 0.8);
 		border: 2px solid rgba(0, 212, 255, 0.4);
 		border-radius: 6px;
@@ -694,6 +700,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		position: relative; /* Create stacking context */
+		z-index: 1; /* Ensure it's above canvas */
+		pointer-events: auto; /* Ensure buttons are clickable */
 	}
 
 	.control-btn:hover {
@@ -708,10 +717,12 @@
 
 	.canvas-container {
 		position: relative;
-		width: 800px;
-		height: 600px;
-		max-width: 90vw;
-		max-height: 50vh;
+		width: 700px;
+		height: 525px;
+		max-width: 85vw;
+		max-height: 45vh;
+		z-index: 5; /* Lower than controls */
+		flex-shrink: 0; /* Prevent canvas from shrinking */
 	}
 
 	.canvas-loading-overlay {
@@ -795,10 +806,10 @@
 	}
 
 	canvas {
-		width: 800px;
-		height: 600px;
-		max-width: 90vw;
-		max-height: 50vh;
+		width: 700px;
+		height: 525px;
+		max-width: 85vw;
+		max-height: 45vh;
 		border-radius: 12px;
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 		border: 2px solid rgba(0, 212, 255, 0.3);
@@ -826,19 +837,25 @@
 	/* Mobile responsive */
 	@media (max-width: 768px) {
 		.hero-content {
-			top: 5%;
+			top: 2%;
+			position: relative;
+			padding: 1rem;
 		}
 
 		h1 {
-			font-size: clamp(2rem, 6vw, 4rem);
+			font-size: clamp(2rem, 6vw, 3rem);
 		}
 
 		.tagline {
-			font-size: clamp(1rem, 2.5vw, 1.5rem);
+			font-size: clamp(0.9rem, 2vw, 1.2rem);
 		}
 
 		.viewer-container {
-			top: 35%;
+			position: relative;
+			top: auto;
+			left: auto;
+			transform: none;
+			margin-top: 1rem;
 			flex-direction: column;
 			gap: 1rem;
 		}
@@ -852,6 +869,7 @@
 		.camera-controls {
 			flex-direction: row;
 			gap: 0.75rem;
+			height: auto; /* Reset height for mobile */
 		}
 
 		.canvas-container {
@@ -861,13 +879,16 @@
 		}
 
 		.style-toggle {
-			margin-top: 1rem;
+			margin-top: 0.5rem;
 			gap: 0.5rem;
+			flex-wrap: wrap; /* Allow wrapping on mobile */
 		}
 
 		.style-btn {
-			padding: 0.6rem 1.2rem;
-			font-size: 0.85rem;
+			padding: 0.5rem 0.8rem;
+			font-size: 0.75rem;
+			flex: 1 1 calc(50% - 0.25rem); /* Two buttons per row */
+			min-width: 0;
 		}
 
 		.controls-hint {
@@ -876,8 +897,8 @@
 		}
 
 		.control-btn {
-			width: 36px;
-			height: 36px;
+			width: 32px;
+			height: 32px;
 			font-size: 1rem;
 		}
 	}
