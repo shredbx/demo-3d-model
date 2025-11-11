@@ -16,7 +16,7 @@
 			path: '/models/ktm-dirt-bike.glb',
 			description: 'KTM Dirt Bike (Blue)',
 			camera: {
-				position: { x: 5, y: 2, z: 7 }, // Further back
+				position: { x: 9, y: 4, z: 6 }, // Further back
 				minDistance: 4,
 				maxDistance: 12,
 				scale: 3, // Reduced from 6
@@ -28,11 +28,11 @@
 			path: '/models/ducati-streetfighter.glb',
 			description: 'Ducati Streetfighter V4 S',
 			camera: {
-				position: { x: 5, y: 2, z: 7 },
+				position: { x: 1, y: 4, z: 9 },
 				minDistance: 4,
 				maxDistance: 12,
-				scale: 3.5,
-				positionOffset: { x: 0, y: 1, z: 0 }
+				scale: 3,
+				positionOffset: { x: 0, y: 0.5, z: 0 }
 			}
 		},
 		style3: {
@@ -40,11 +40,11 @@
 			path: '/models/suzuki-gsx-750.glb',
 			description: 'Suzuki GSX 750 Sport Bike',
 			camera: {
-				position: { x: 5, y: 2, z: 7 },
+				position: { x: 15, y: 6, z: 11 }, // Raised camera (y: 2 -> 3.5) and zoomed out (z: 7 -> 9)
 				minDistance: 4,
 				maxDistance: 12,
-				scale: 3.5,
-				positionOffset: { x: 0, y: 1, z: 0 }
+				scale: 3,
+				positionOffset: { x: 0, y: 0.5, z: 0 }
 			}
 		},
 		style4: {
@@ -52,11 +52,11 @@
 			path: '/models/yamaha-stryker.glb',
 			description: 'Yamaha Stryker Cruiser',
 			camera: {
-				position: { x: 6, y: 2, z: 8 },
+				position: { x: 15, y: 6, z: 11 }, // Raised camera (y: 2 -> 3.5) and zoomed out (z: 8 -> 10)
 				minDistance: 4,
 				maxDistance: 12,
-				scale: 3.5,
-				positionOffset: { x: 0, y: 0.8, z: 0 }
+				scale: 3,
+				positionOffset: { x: 0, y: 0.5, z: 0 }
 			}
 		}
 	};
@@ -518,19 +518,20 @@
 			</div>
 		</div>
 
-		<!-- Three.js Canvas -->
-		<canvas bind:this={canvas} data-testid="model-canvas" />
-	</div>
+		<!-- Canvas Container (with loading overlay) -->
+		<div class="canvas-container">
+			<!-- Three.js Canvas -->
+			<canvas bind:this={canvas} data-testid="model-canvas" />
 
-	<!-- Loading indicator positioned over canvas -->
-	{#if loading}
-		<div class="loading-overlay" data-testid="loading-spinner">
-			<div class="loading">
-				<div class="spinner"></div>
-				<p>Loading 3D Model... {loadingProgress.toFixed(0)}%</p>
-			</div>
+			<!-- Loading indicator integrated into canvas area -->
+			{#if loading}
+				<div class="canvas-loading-overlay" data-testid="loading-spinner">
+					<div class="spinner"></div>
+					<p>Loading 3D Model... {loadingProgress.toFixed(0)}%</p>
+				</div>
+			{/if}
 		</div>
-	{/if}
+	</div>
 
 	<!-- Gradient overlays for depth -->
 	<div class="gradient-overlay gradient-top"></div>
@@ -691,36 +692,35 @@
 		transform: scale(0.95);
 	}
 
-	.loading-overlay {
-		position: absolute;
-		top: 40%;
-		left: 50%;
-		transform: translateX(-50%);
+	.canvas-container {
+		position: relative;
 		width: 800px;
 		height: 600px;
 		max-width: 90vw;
 		max-height: 50vh;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 30;
-		background: rgba(42, 42, 42, 0.95);
-		border-radius: 12px;
-		pointer-events: none;
-		border: 2px solid rgba(0, 212, 255, 0.3);
 	}
 
-	.loading {
+	.canvas-loading-overlay {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		justify-content: center;
 		gap: 1rem;
+		z-index: 15;
+		pointer-events: none;
 	}
 
-	.loading p {
+	.canvas-loading-overlay p {
 		color: #00d4ff;
-		font-size: 1rem;
-		font-weight: 500;
+		font-size: 1.2rem;
+		font-weight: 600;
+		text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+		margin: 0;
 	}
 
 	.spinner {
@@ -840,8 +840,7 @@
 			gap: 0.75rem;
 		}
 
-		.loading-overlay {
-			top: 35%;
+		.canvas-container {
 			width: 95vw;
 			height: 60vh;
 			max-height: 500px;
