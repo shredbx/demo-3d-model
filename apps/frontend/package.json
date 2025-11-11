@@ -7,9 +7,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@sveltejs/adapter-auto": "^3.0.0",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",

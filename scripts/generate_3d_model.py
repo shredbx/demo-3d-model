@@ -23,10 +23,14 @@ import json
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configuration
 MESHY_API_KEY = os.getenv("MESHY_API_KEY")
-MESHY_BASE_URL = "https://api.meshy.ai/v2/image-to-3d"
+MESHY_BASE_URL = "https://api.meshy.ai/openapi/v1/image-to-3d"
 
 if not MESHY_API_KEY:
     print("❌ Error: MESHY_API_KEY not found in environment")
@@ -36,51 +40,66 @@ if not MESHY_API_KEY:
 
 async def upload_image_to_meshy(image_path: str) -> str:
     """
-    Upload image to Meshy.ai and get public URL
+    Resize and convert image to base64 data URI for Meshy.ai
+
+    Meshy.ai has limits on image size, so we resize to max 2048x2048
 
     Returns:
-        Public URL of uploaded image
+        Base64 data URI of resized image
     """
-    print(f"📤 Uploading image: {image_path}")
+    print(f"📤 Processing image: {image_path}")
 
-    # Read image file
-    image_data = Path(image_path).read_bytes()
+    import base64
+    from PIL import Image
+    import io
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        # Request upload URL
-        response = await client.post(
-            "https://api.meshy.ai/v2/image-to-3d/upload",
-            headers={"Authorization": f"Bearer {MESHY_API_KEY}"},
-            json={"filename": Path(image_path).name}
-        )
-        response.raise_for_status()
-        upload_data = response.json()
+    # Open and resize image
+    img = Image.open(image_path)
+    original_size = img.size
+    print(f"   Original size: {original_size[0]}x{original_size[1]}")
 
-        # Upload to presigned URL
-        upload_response = await client.put(
-            upload_data["url"],
-            content=image_data,
-            headers={"Content-Type": "image/jpeg"}
-        )
-        upload_response.raise_for_status()
+    # Resize if too large (max 2048x2048)
+    max_size = 2048
+    if max(img.size) > max_size:
+        ratio = max_size / max(img.size)
+        new_size = tuple(int(dim * ratio) for dim in img.size)
+        img = img.resize(new_size, Image.Resampling.LANCZOS)
+        print(f"   Resized to: {img.size[0]}x{img.size[1]}")
 
-        print(f"✅ Image uploaded successfully")
-        return upload_data["url"].split('?')[0]  # Remove query params
+    # Convert to JPEG and compress
+    buffer = io.BytesIO()
+    if img.mode in ('RGBA', 'LA', 'P'):
+        # Convert transparency to white background
+        background = Image.new('RGB', img.size, (255, 255, 255))
+        if img.mode == 'P':
+            img = img.convert('RGBA')
+        background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+        img = background
+
+    img.save(buffer, format='JPEG', quality=85, optimize=True)
+    image_data = buffer.getvalue()
+
+    # Create base64 data URI
+    base64_data = base64.b64encode(image_data).decode('utf-8')
+    data_uri = f"data:image/jpeg;base64,{base64_data}"
+
+    print(f"✅ Image encoded: {len(image_data) / 1024:.1f} KB (base64: {len(data_uri) / 1024:.1f} KB)")
+    return data_uri
 
 
-async def create_3d_task(image_url: str) -> str:
+async def create_3d_task(image_data_uri: str) -> str:
     """
     Create image-to-3D generation task
 
     Args:
-        image_url: Public URL of uploaded image
+        image_data_uri: Base64 data URI of image
 
     Returns:
         Task ID for polling
     """
     print(f"🎨 Creating 3D generation task...")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(
             MESHY_BASE_URL,
             headers={
@@ -88,9 +107,9 @@ async def create_3d_task(image_url: str) -> str:
                 "Content-Type": "application/json"
             },
             json={
-                "image_url": image_url,
+                "image_url": image_data_uri,  # Accepts data URI
                 "enable_pbr": True,  # Physically Based Rendering textures
-                "ai_model": "meshy-4",  # Latest model (best quality)
+                "ai_model": "latest",  # Latest model (Meshy-6 preview, best quality)
                 "topology": "quad",  # Quad topology (better for animation)
                 "target_polycount": 30000  # 30k polys (good for web)
             }
@@ -98,7 +117,7 @@ async def create_3d_task(image_url: str) -> str:
         response.raise_for_status()
         data = response.json()
 
-        task_id = data["id"]
+        task_id = data["result"]  # Meshy returns "result" not "id"
         print(f"✅ Task created: {task_id}")
         print(f"⏳ Estimated time: 5-15 minutes")
 
@@ -205,11 +224,11 @@ async def main(image_path: str):
     print(f"{'='*50}\n")
 
     try:
-        # Step 1: Upload image
-        image_url = await upload_image_to_meshy(image_path)
+        # Step 1: Encode image to base64
+        image_data_uri = await upload_image_to_meshy(image_path)
 
         # Step 2: Create task
-        task_id = await create_3d_task(image_url)
+        task_id = await create_3d_task(image_data_uri)
 
         # Step 3: Poll until complete
         result = await poll_status(task_id)
@@ -239,9 +258,13 @@ async def main(image_path: str):
     except httpx.HTTPStatusError as e:
         print(f"\n❌ HTTP Error: {e.response.status_code}")
         print(f"Response: {e.response.text}")
+        print(f"Request URL: {e.request.url}")
+        print(f"Request body: {e.request.content[:500] if e.request.content else 'None'}")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n❌ Error: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 

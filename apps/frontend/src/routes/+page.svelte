@@ -9,32 +9,208 @@
 	let error = $state<string | null>(null);
 	let loadingProgress = $state(0);
 
-	// IMPORTANT: Replace this with your actual task ID after running the generation script
-	// Example: const MODEL_PATH = '/models/bike-abc123def456.glb';
-	const MODEL_PATH = '/models/bike-REPLACE_WITH_TASK_ID.glb';
+	// Available bike models/styles with per-model configurations
+	const MODELS = {
+		style1: {
+			name: 'Dirt Bike',
+			path: '/models/ktm-dirt-bike.glb',
+			description: 'KTM Dirt Bike (Blue)',
+			camera: {
+				position: { x: 5, y: 2, z: 7 }, // Further back
+				minDistance: 4,
+				maxDistance: 12,
+				scale: 3, // Reduced from 6
+				positionOffset: { x: 0, y: 1.5, z: 0 } // Lift it up
+			}
+		},
+		style2: {
+			name: 'Road Bike',
+			path: '/models/style-2.glb',
+			description: 'Road Bike (Street Style)',
+			camera: {
+				position: { x: 6, y: 2, z: 8 }, // Further zoom for road bike
+				minDistance: 4,
+				maxDistance: 12,
+				scale: 4, // Smaller scale if model is huge
+				positionOffset: { x: 0, y: 0.5, z: 0 } // Adjust Y if needed
+			}
+		}
+	};
+
+	// Current selected style
+	let currentStyle = $state<'style1' | 'style2'>('style1');
+	let currentModel: any = null; // Store current loaded model
+	let scene: THREE.Scene;
+	let camera: THREE.PerspectiveCamera;
+	let renderer: THREE.WebGLRenderer;
+	let controls: OrbitControls;
+
+	// Function to load a model with per-model configuration
+	function loadModel(modelPath: string, config: any) {
+		console.log('🚀 loadModel() called with:', modelPath);
+		loading = true;
+		error = null;
+		loadingProgress = 0;
+
+		// Remove old model if exists
+		if (currentModel) {
+			console.log('🗑️ Removing old model');
+			scene.remove(currentModel);
+			currentModel = null;
+		}
+
+		// Load new model
+		console.log('📦 Starting GLTFLoader for:', modelPath);
+		const loader = new GLTFLoader();
+		loader.load(
+			modelPath,
+			// onLoad
+			(gltf) => {
+				console.log('✅ Model loaded successfully:', modelPath);
+				const model = gltf.scene;
+
+				// Enable shadows and customize colors
+				model.traverse((child) => {
+					if (child instanceof THREE.Mesh) {
+						child.castShadow = true;
+						child.receiveShadow = true;
+
+						// Color customization: Replace KTM orange with blue (like bike photo)
+						if (child.material) {
+							// Handle array of materials
+							const materials = Array.isArray(child.material) ? child.material : [child.material];
+
+							materials.forEach((material) => {
+								if (material.color) {
+									const hex = material.color.getHex();
+
+									// Replace KTM orange (#FF6600 or similar) with blue (#0066FF)
+									// Check if color is orange-ish (R high, G medium, B low)
+									const r = (hex >> 16) & 0xff;
+									const g = (hex >> 8) & 0xff;
+									const b = hex & 0xff;
+
+									if (r > 200 && g < 150 && b < 100) {
+										// It's orange - replace with blue
+										material.color.setHex(0x0066FF);
+										console.log('Replaced orange with blue');
+									}
+
+									// Darken very bright whites (likely logos) to hide KTM branding
+									if (r > 240 && g > 240 && b > 240) {
+										material.color.setHex(0x1a1a1a); // Dark gray
+										console.log('Darkened bright white (logo area)');
+									}
+								}
+
+								// If material has a texture map with KTM logo, reduce its opacity
+								if (material.map && material.map.name && material.map.name.toLowerCase().includes('ktm')) {
+									material.opacity = 0.3;
+									material.transparent = true;
+									console.log('Reduced KTM texture opacity');
+								}
+							});
+						}
+					}
+				});
+
+				// Center and scale model using per-model configuration
+				const box = new THREE.Box3().setFromObject(model);
+				const center = box.getCenter(new THREE.Vector3());
+				const size = box.getSize(new THREE.Vector3());
+
+				// Apply scale from config instead of calculating
+				const scale = config.scale;
+				model.scale.multiplyScalar(scale);
+
+				// Recalculate after scaling
+				box.setFromObject(model);
+				const newCenter = box.getCenter(new THREE.Vector3());
+				model.position.sub(newCenter);
+
+				// Apply position offset from config
+				model.position.x += config.positionOffset.x;
+				model.position.y += config.positionOffset.y;
+				model.position.z += config.positionOffset.z;
+
+				scene.add(model);
+				currentModel = model;
+
+				// Update camera position and controls based on config
+				camera.position.set(config.position.x, config.position.y, config.position.z);
+				controls.minDistance = config.minDistance;
+				controls.maxDistance = config.maxDistance;
+				controls.update();
+
+				loading = false;
+
+				console.log('✅ Model loaded and configured successfully');
+				console.log('Model dimensions:', size);
+				console.log('Model scale:', scale);
+				console.log('Camera position:', config.position);
+			},
+			// onProgress
+			(progress) => {
+				if (progress.total > 0) {
+					loadingProgress = (progress.loaded / progress.total) * 100;
+					console.log(`📊 Loading progress: ${loadingProgress.toFixed(0)}%`);
+				}
+			},
+			// onError
+			(err) => {
+				console.error('❌ Error loading model:', err);
+				error = `Failed to load 3D model: ${modelPath}`;
+				loading = false;
+			}
+		);
+	}
+
+	// Watch for style changes and load new model
+	// Use untrack to prevent infinite loops when updating previousStyle
+	let previousStyle: 'style1' | 'style2' = 'style1';
+	$effect(() => {
+		console.log('🔄 $effect triggered!');
+		console.log('  scene:', !!scene);
+		console.log('  currentStyle:', currentStyle);
+		console.log('  previousStyle:', previousStyle);
+		console.log('  Condition check (currentStyle !== previousStyle):', currentStyle !== previousStyle);
+
+		if (scene && currentStyle && currentStyle !== previousStyle) {
+			console.log(`✅ Loading new model: ${MODELS[currentStyle].name}`);
+			const modelConfig = MODELS[currentStyle];
+			console.log(`Switching to ${modelConfig.name}: ${modelConfig.path}`);
+			loadModel(modelConfig.path, modelConfig.camera);
+			previousStyle = currentStyle; // Update after loading starts
+		} else {
+			console.log('❌ Skipping model load - condition not met');
+		}
+	});
 
 	onMount(() => {
 		// Scene setup
-		const scene = new THREE.Scene();
-		scene.background = new THREE.Color(0x0a0a0a); // Very dark background
-		scene.fog = new THREE.Fog(0x0a0a0a, 10, 50); // Atmospheric fog
+		scene = new THREE.Scene();
+		scene.background = new THREE.Color(0xe0e8f0); // Light blue-gray
+		// Fog removed for better visibility
 
-		// Camera
-		const camera = new THREE.PerspectiveCamera(
+		// Camera setup with fixed canvas dimensions
+		const canvasWidth = 800;
+		const canvasHeight = 600;
+
+		camera = new THREE.PerspectiveCamera(
 			60,
-			window.innerWidth / window.innerHeight,
+			canvasWidth / canvasHeight,
 			0.1,
 			1000
 		);
-		camera.position.set(4, 2, 6);
+		camera.position.set(4, 0, 6);
 
 		// Renderer with anti-aliasing
-		const renderer = new THREE.WebGLRenderer({
+		renderer = new THREE.WebGLRenderer({
 			canvas,
 			antialias: true,
 			alpha: false
 		});
-		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setSize(canvasWidth, canvasHeight);
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -42,7 +218,7 @@
 		renderer.toneMappingExposure = 1.2;
 
 		// Controls with smooth damping
-		const controls = new OrbitControls(camera, renderer.domElement);
+		controls = new OrbitControls(camera, renderer.domElement);
 		controls.enableDamping = true;
 		controls.dampingFactor = 0.05;
 		controls.minDistance = 2;
@@ -51,12 +227,12 @@
 		controls.autoRotate = true;
 		controls.autoRotateSpeed = 0.5;
 
-		// Lighting setup - Multiple lights for dramatic effect
-		const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+		// Lighting setup - Much brighter for better visibility
+		const ambientLight = new THREE.AmbientLight(0xffffff, 3.0); // Increased to 3.0 for brightness
 		scene.add(ambientLight);
 
-		// Key light (main directional light)
-		const keyLight = new THREE.DirectionalLight(0xffffff, 1.5);
+		// Key light (main directional light) - Very bright
+		const keyLight = new THREE.DirectionalLight(0xffffff, 4.0); // Increased to 4.0
 		keyLight.position.set(5, 10, 7);
 		keyLight.castShadow = true;
 		keyLight.shadow.mapSize.width = 2048;
@@ -65,94 +241,23 @@
 		keyLight.shadow.camera.far = 50;
 		scene.add(keyLight);
 
+		// Front light (illuminate from camera direction for better visibility)
+		const frontLight = new THREE.DirectionalLight(0xffffff, 2.5); // Increased to 2.5
+		frontLight.position.set(0, 5, 10); // In front of bike
+		scene.add(frontLight);
+
 		// Fill light (softer, opposite side)
-		const fillLight = new THREE.DirectionalLight(0x88ccff, 0.4);
+		const fillLight = new THREE.DirectionalLight(0xffffff, 2.0); // Increased to 2.0 and changed to white
 		fillLight.position.set(-5, 5, -5);
 		scene.add(fillLight);
 
-		// Rim light (back light for edge highlights)
-		const rimLight = new THREE.SpotLight(0x00d4ff, 1.2);
-		rimLight.position.set(-3, 8, -8);
-		rimLight.angle = Math.PI / 6;
-		rimLight.penumbra = 0.3;
-		scene.add(rimLight);
+		// Additional top light for more even illumination
+		const topLight = new THREE.DirectionalLight(0xffffff, 2.0);
+		topLight.position.set(0, 10, 0);
+		scene.add(topLight);
 
-		// Accent light (colored spotlight from below)
-		const accentLight = new THREE.PointLight(0x0099ff, 0.8, 20);
-		accentLight.position.set(0, -2, 0);
-		scene.add(accentLight);
-
-		// Ground plane for shadows
-		const groundGeometry = new THREE.CircleGeometry(10, 32);
-		const groundMaterial = new THREE.MeshStandardMaterial({
-			color: 0x0a0a0a,
-			roughness: 0.8,
-			metalness: 0.2
-		});
-		const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-		ground.rotation.x = -Math.PI / 2;
-		ground.position.y = -0.5;
-		ground.receiveShadow = true;
-		scene.add(ground);
-
-		// Grid helper (subtle)
-		const gridHelper = new THREE.GridHelper(20, 20, 0x222222, 0x111111);
-		gridHelper.position.y = -0.49;
-		scene.add(gridHelper);
-
-		// Load 3D model
-		const loader = new GLTFLoader();
-		loader.load(
-			MODEL_PATH,
-			// onLoad
-			(gltf) => {
-				const model = gltf.scene;
-
-				// Enable shadows
-				model.traverse((child) => {
-					if (child instanceof THREE.Mesh) {
-						child.castShadow = true;
-						child.receiveShadow = true;
-					}
-				});
-
-				// Center and scale model
-				const box = new THREE.Box3().setFromObject(model);
-				const center = box.getCenter(new THREE.Vector3());
-				const size = box.getSize(new THREE.Vector3());
-
-				// Calculate scale to fit model nicely
-				const maxDim = Math.max(size.x, size.y, size.z);
-				const scale = 3 / maxDim; // Target size of 3 units
-				model.scale.multiplyScalar(scale);
-
-				// Recalculate after scaling
-				box.setFromObject(model);
-				const newCenter = box.getCenter(new THREE.Vector3());
-				model.position.sub(newCenter);
-				model.position.y = 0; // Place on ground
-
-				scene.add(model);
-				loading = false;
-
-				console.log('✅ Model loaded successfully');
-				console.log('Model dimensions:', size);
-				console.log('Model scale:', scale);
-			},
-			// onProgress
-			(progress) => {
-				if (progress.total > 0) {
-					loadingProgress = (progress.loaded / progress.total) * 100;
-					console.log(`Loading: ${loadingProgress.toFixed(0)}%`);
-				}
-			},
-			// onError
-			(err) => {
-				console.error('❌ Error loading model:', err);
-				error = `Failed to load 3D model. Make sure to:\n1. Run the generation script first\n2. Update MODEL_PATH in +page.svelte\n3. Check browser console for details`;
-				loading = false;
-			}
-		);
+		// Load initial model after scene is ready
+		loadModel(MODELS.style1.path, MODELS.style1.camera);
 
 		// Animation loop
 		function animate() {
@@ -162,11 +267,13 @@
 		}
 		animate();
 
-		// Handle window resize
+		// Handle window resize (maintain fixed canvas aspect ratio)
 		function handleResize() {
-			camera.aspect = window.innerWidth / window.innerHeight;
+			// Get actual canvas dimensions from CSS
+			const rect = canvas.getBoundingClientRect();
+			camera.aspect = rect.width / rect.height;
 			camera.updateProjectionMatrix();
-			renderer.setSize(window.innerWidth, window.innerHeight);
+			renderer.setSize(rect.width, rect.height);
 		}
 		window.addEventListener('resize', handleResize);
 
@@ -182,34 +289,69 @@
 <div class="hero">
 	<!-- Hero Content -->
 	<div class="hero-content">
-		<h1>ShredBX</h1>
+		<h1>MotoMoto</h1>
 		<p class="tagline">Transform Your Bike into 3D</p>
+		<!-- Temporarily hidden
 		<div class="subtitle">
 			Upload a photo of your dirt bike and watch it come alive in interactive 3D
 		</div>
+		-->
 
-		{#if loading}
-			<div class="loading">
-				<div class="spinner"></div>
-				<p>Loading 3D Model... {loadingProgress.toFixed(0)}%</p>
-			</div>
-		{/if}
+		<!-- Style Toggle -->
+		<div class="style-toggle">
+			<button
+				class="style-btn"
+				class:active={currentStyle === 'style1'}
+				onclick={() => {
+					console.log('🖱️ Button clicked! Previous:', currentStyle);
+					currentStyle = 'style1';
+					console.log('🖱️ Button clicked! New:', currentStyle);
+				}}
+				title={MODELS.style1.description}
+			>
+				🏍️ Dirt Bike
+			</button>
+			<button
+				class="style-btn"
+				class:active={currentStyle === 'style2'}
+				onclick={() => {
+					console.log('🖱️ Button clicked! Previous:', currentStyle);
+					currentStyle = 'style2';
+					console.log('🖱️ Button clicked! New:', currentStyle);
+				}}
+				title={MODELS.style2.description}
+			>
+				🏍️ Road Bike
+			</button>
+		</div>
 
 		{#if error}
-			<div class="error">
+			<div class="error" data-testid="error-message">
 				<h3>⚠️ Model Not Found</h3>
 				<pre>{error}</pre>
 			</div>
 		{/if}
 
+		<!-- Temporarily hidden until upload works
 		<div class="controls-hint">
 			<span>🖱️ Drag to rotate</span>
 			<span>🔍 Scroll to zoom</span>
 		</div>
+		-->
 	</div>
 
 	<!-- Three.js Canvas -->
-	<canvas bind:this={canvas} />
+	<canvas bind:this={canvas} data-testid="model-canvas" />
+
+	<!-- Loading indicator positioned over canvas -->
+	{#if loading}
+		<div class="loading-overlay" data-testid="loading-spinner">
+			<div class="loading">
+				<div class="spinner"></div>
+				<p>Loading 3D Model... {loadingProgress.toFixed(0)}%</p>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Gradient overlays for depth -->
 	<div class="gradient-overlay gradient-top"></div>
@@ -235,7 +377,7 @@
 
 	.hero-content {
 		position: absolute;
-		top: 15%;
+		top: 5%;
 		left: 50%;
 		transform: translateX(-50%);
 		text-align: center;
@@ -281,8 +423,60 @@
 		opacity: 0.9;
 	}
 
+	.style-toggle {
+		margin-top: 2rem;
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		flex-wrap: wrap;
+	}
+
+	.style-btn {
+		padding: 0.75rem 1.5rem;
+		background: rgba(0, 0, 0, 0.8);
+		border: 2px solid rgba(0, 212, 255, 0.3);
+		border-radius: 8px;
+		color: #8892b0;
+		font-size: 0.9rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		backdrop-filter: blur(10px);
+	}
+
+	.style-btn:hover {
+		border-color: rgba(0, 212, 255, 0.6);
+		color: #00d4ff;
+		background: rgba(0, 0, 0, 0.9);
+		transform: translateY(-2px);
+	}
+
+	.style-btn.active {
+		border-color: #00d4ff;
+		color: #00d4ff;
+		background: rgba(0, 0, 0, 0.95);
+		box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+	}
+
+	.loading-overlay {
+		position: absolute;
+		top: 40%; /* Match canvas position */
+		left: 50%;
+		transform: translateX(-50%);
+		width: 800px;
+		height: 600px;
+		max-width: 90vw;
+		max-height: 50vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 10; /* Above canvas */
+		background: rgba(224, 232, 240, 0.95); /* Match scene background with slight transparency */
+		border-radius: 12px;
+		pointer-events: none;
+	}
+
 	.loading {
-		margin-top: 3rem;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
@@ -354,11 +548,16 @@
 
 	canvas {
 		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
+		top: 40%;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 800px;
+		height: 600px;
+		max-width: 90vw;
+		max-height: 50vh;
 		z-index: 1;
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 	}
 
 	.gradient-overlay {
@@ -383,7 +582,39 @@
 	/* Mobile responsive */
 	@media (max-width: 768px) {
 		.hero-content {
-			top: 10%;
+			top: 5%;
+		}
+
+		h1 {
+			font-size: clamp(2rem, 6vw, 4rem);
+		}
+
+		.tagline {
+			font-size: clamp(1rem, 2.5vw, 1.5rem);
+		}
+
+		canvas {
+			top: 35%;
+			width: 95vw;
+			height: 60vh;
+			max-height: 500px;
+		}
+
+		.loading-overlay {
+			top: 35%; /* Match mobile canvas position */
+			width: 95vw;
+			height: 60vh;
+			max-height: 500px;
+		}
+
+		.style-toggle {
+			margin-top: 1rem;
+			gap: 0.5rem;
+		}
+
+		.style-btn {
+			padding: 0.6rem 1.2rem;
+			font-size: 0.85rem;
 		}
 
 		.controls-hint {
