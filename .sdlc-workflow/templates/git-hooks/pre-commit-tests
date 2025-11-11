@@ -1,0 +1,86 @@
+#!/bin/bash
+# Pre-commit hook for Bestays Platform
+# Runs fast tests before allowing commits
+# Target execution time: < 30 seconds
+#
+# Installation: Run .sdlc-workflow/scripts/setup-git-hooks.sh
+# Bypass: git commit --no-verify (use sparingly, for WIP commits only)
+
+set -e  # Exit on first error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Progress indicator
+echo ""
+echo -e "${BLUE}🔍 Running pre-commit tests...${NC}"
+echo ""
+
+# Track timing
+START_TIME=$(date +%s)
+
+# ===========================================================================
+# 1. TypeScript Type Checking
+# ===========================================================================
+echo -e "${BLUE}[1/2]${NC} TypeScript type checking..."
+
+cd apps/frontend || exit 1
+
+if npm run check > /tmp/precommit-typecheck.log 2>&1; then
+    echo -e "  ${GREEN}✓${NC} TypeScript check passed"
+else
+    echo -e "  ${RED}✗${NC} TypeScript check failed"
+    echo ""
+    echo -e "${RED}Type errors found:${NC}"
+    tail -20 /tmp/precommit-typecheck.log
+    echo ""
+    echo -e "${YELLOW}To fix:${NC} npm run check (in apps/frontend/)"
+    echo -e "${YELLOW}To commit anyway:${NC} git commit --no-verify"
+    exit 1
+fi
+
+# ===========================================================================
+# 2. Unit Tests
+# ===========================================================================
+echo -e "${BLUE}[2/2]${NC} Unit tests..."
+
+if npm run test:unit > /tmp/precommit-unittest.log 2>&1; then
+    # Extract test count from output
+    TEST_COUNT=$(grep -oP '\d+(?= passed)' /tmp/precommit-unittest.log | tail -1 || echo "?")
+    echo -e "  ${GREEN}✓${NC} Unit tests passed (${TEST_COUNT} tests)"
+else
+    echo -e "  ${RED}✗${NC} Unit tests failed"
+    echo ""
+    echo -e "${RED}Test failures:${NC}"
+    tail -30 /tmp/precommit-unittest.log
+    echo ""
+    echo -e "${YELLOW}To fix:${NC} npm run test:unit (in apps/frontend/)"
+    echo -e "${YELLOW}To commit anyway:${NC} git commit --no-verify"
+    exit 1
+fi
+
+cd ../.. || exit 1
+
+# ===========================================================================
+# Summary
+# ===========================================================================
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+
+echo ""
+echo -e "${GREEN}✅ All pre-commit tests passed!${NC}"
+echo -e "   Execution time: ${DURATION}s"
+echo ""
+
+# Warn if tests are too slow
+if [ "$DURATION" -gt 30 ]; then
+    echo -e "${YELLOW}⚠️  Warning: Pre-commit tests took longer than 30s${NC}"
+    echo -e "${YELLOW}   Consider optimizing test performance${NC}"
+    echo ""
+fi
+
+exit 0

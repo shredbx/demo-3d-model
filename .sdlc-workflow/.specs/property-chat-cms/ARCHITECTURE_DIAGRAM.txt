@@ -1,0 +1,345 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    PROPERTY CHAT CMS - LLM ARCHITECTURE                       ║
+║                         Multimodal Property Extraction                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              AGENT INTERFACE                                  │
+│                        (SvelteKit 5 - Chat UI)                                │
+│                                                                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Text      │  │   Images    │  │   Voice     │  │   Review    │         │
+│  │   Input     │  │   Upload    │  │  Recording  │  │    Form     │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘         │
+└────────────────────────────────┬─────────────────────────────────────────────┘
+                                 │ HTTP / WebSocket
+                                 │
+┌────────────────────────────────▼─────────────────────────────────────────────┐
+│                           FASTAPI BACKEND                                     │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐     │
+│  │              POST /api/v1/properties/extract                         │     │
+│  │  - Multipart: text, images[], voice_file                             │     │
+│  │  - Returns: PropertyExtractionResult                                 │     │
+│  └─────────────────────────────────────────────────────────────────────┘     │
+│                                 │                                             │
+│  ┌──────────────────────────────▼──────────────────────────────────────┐     │
+│  │           PropertyExtractionService                                  │     │
+│  │  - Orchestrates extraction workflow                                  │     │
+│  │  - Manages conversation context                                      │     │
+│  │  - Coordinates LangChain agent                                       │     │
+│  └──────────────────────────────┬──────────────────────────────────────┘     │
+│                                 │                                             │
+│         ┌───────────────────────┼───────────────────────┐                    │
+│         │                       │                       │                    │
+│  ┌──────▼──────┐      ┌─────────▼────────┐      ┌──────▼──────┐             │
+│  │   Voice     │      │     Image        │      │    Text     │             │
+│  │Transcription│      │   Analyzer       │      │  Processor  │             │
+│  │  (Whisper)  │      │   (GPT-4o)       │      │  (Gemini)   │             │
+│  └──────┬──────┘      └─────────┬────────┘      └──────┬──────┘             │
+│         │                       │                       │                    │
+│         └───────────────────────┼───────────────────────┘                    │
+│                                 │                                             │
+│  ┌──────────────────────────────▼──────────────────────────────────────┐     │
+│  │              PropertyExtractionAgent (LangChain)                     │     │
+│  │                                                                      │     │
+│  │  ┌─────────────────────┐  ┌──────────────────────┐                  │     │
+│  │  │  PropertyTypeTool   │  │ ExtractionTool       │                  │     │
+│  │  │  - Detect type      │  │ - Extract fields     │                  │     │
+│  │  │  - Confidence score │  │ - Type-specific      │                  │     │
+│  │  └─────────────────────┘  └──────────────────────┘                  │     │
+│  │                                                                      │     │
+│  │  ┌─────────────────────┐  ┌──────────────────────┐                  │     │
+│  │  │ AmenityDetectionTool│  │ ValidationTool       │                  │     │
+│  │  │ - RAG matching      │  │ - Check completeness │                  │     │
+│  │  │ - Image + text      │  │ - Confidence check   │                  │     │
+│  │  └─────────────────────┘  └──────────────────────┘                  │     │
+│  │                                                                      │     │
+│  │  ┌─────────────────────────────────────────────────────────┐        │     │
+│  │  │  ConversationBufferMemory (PostgreSQL)                  │        │     │
+│  │  │  - Multi-turn dialogue support                          │        │     │
+│  │  │  - Integrates with existing conversations table         │        │     │
+│  │  └─────────────────────────────────────────────────────────┘        │     │
+│  └──────────────────────────────┬──────────────────────────────────────┘     │
+│                                 │                                             │
+│  ┌──────────────────────────────▼──────────────────────────────────────┐     │
+│  │                   PostgreSQL + pgvector                              │     │
+│  │                                                                      │     │
+│  │  ┌────────────────┐  ┌──────────────────┐  ┌───────────────────┐   │     │
+│  │  │  properties    │  │  conversations   │  │ property_         │   │     │
+│  │  │  - Core data   │  │  - Chat history  │  │ extractions       │   │     │
+│  │  │  - JSONB       │  │  - Messages      │  │ - Metadata        │   │     │
+│  │  └────────────────┘  └──────────────────┘  └───────────────────┘   │     │
+│  │                                                                      │     │
+│  │  ┌────────────────┐  ┌──────────────────┐  ┌───────────────────┐   │     │
+│  │  │ rental_details │  │ sale_details     │  │ amenity_          │   │     │
+│  │  │ lease_details  │  │ business_details │  │ embeddings        │   │     │
+│  │  │investment_det. │  │                  │  │ (pgvector)        │   │     │
+│  │  └────────────────┘  └──────────────────┘  └───────────────────┘   │     │
+│  │                                                                      │     │
+│  │  ┌──────────────────────────────────────────────────────────┐       │     │
+│  │  │  catalogue_options (165+ amenities, 81 location adv.)    │       │     │
+│  │  └──────────────────────────────────────────────────────────┘       │     │
+│  └──────────────────────────────────────────────────────────────────────┘     │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐     │
+│  │                       Redis Cache Layer                              │     │
+│  │  - Amenity embeddings (7-day TTL)                                    │     │
+│  │  - LLM response cache (1-hour TTL)                                   │     │
+│  │  - Rate limiting                                                     │     │
+│  └─────────────────────────────────────────────────────────────────────┘     │
+└───────────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 │
+┌────────────────────────────────▼─────────────────────────────────────────────┐
+│                          EXTERNAL SERVICES                                    │
+│                                                                               │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐              │
+│  │   OpenRouter    │  │  OpenAI Whisper │  │  Cloudflare R2  │              │
+│  │   API           │  │   API           │  │  (Storage)      │              │
+│  │                 │  │                 │  │                 │              │
+│  │  - Gemini       │  │  - Transcription│  │  - Images       │              │
+│  │  - GPT-4o       │  │  - $0.006/min   │  │  - Voice files  │              │
+│  │  - Claude 3.5   │  │                 │  │                 │              │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘              │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+                            EXTRACTION FLOW
+═══════════════════════════════════════════════════════════════════════════════
+
+  START
+    │
+    ▼
+┌───────────────────┐
+│ Agent uploads:    │
+│ - Text desc.      │
+│ - Images (0-10)   │
+│ - Voice (optional)│
+└─────────┬─────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────────────┐
+│             STAGE 1: Input Preprocessing                     │
+│                                                               │
+│  - Voice → Whisper transcription                             │
+│  - Images → Encode for vision model                          │
+│  - Text → Clean and normalize                                │
+└─────────┬────────────────────────────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────────────┐
+│           STAGE 2: Property Type Detection                   │
+│                                                               │
+│  PropertyTypeTool:                                           │
+│  - Keyword analysis (heuristics)                             │
+│  - LLM confirmation (Gemini)                                 │
+│  - Confidence scoring                                        │
+│                                                               │
+│  Output: {type: "rental|sale|...", confidence: 0.0-1.0}      │
+└─────────┬────────────────────────────────────────────────────┘
+          │
+          ▼              Confidence < 0.7
+┌─────────────────┐     ────────────────────►  ┌────────────┐
+│ Confidence OK?  │                            │ Ask agent  │
+│   (>= 0.7)      │                            │ to clarify │
+└─────────┬───────┘                            └──────┬─────┘
+          │ Yes                                       │
+          ▼                                           │
+┌──────────────────────────────────────────────────────────────┐
+│         STAGE 3: Structured Data Extraction                  │
+│                                                               │
+│  ExtractionTool (type-specific):                             │
+│  - Core fields (title, description, location)                │
+│  - Physical specs (rooms, dimensions, building)              │
+│  - Transaction details (price, terms)                        │
+│                                                               │
+│  AmenityDetectionTool:                                       │
+│  - Text-based detection (RAG with embeddings)                │
+│  - Image-based detection (GPT-4o vision)                     │
+│  - Merge & deduplicate                                       │
+│                                                               │
+│  Output: PropertyExtractionResult (Pydantic)                 │
+└─────────┬────────────────────────────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────────────┐
+│            STAGE 4: Validation & Confidence                  │
+│                                                               │
+│  ValidationTool:                                             │
+│  - Required fields present?                                  │
+│  - Data types valid?                                         │
+│  - Cross-field consistency?                                  │
+│  - Catalog IDs exist?                                        │
+│                                                               │
+│  Quality Check:                                              │
+│  - Overall confidence >= 0.6?                                │
+│  - Price reasonable?                                         │
+│  - Room counts logical?                                      │
+└─────────┬────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────┐     Missing required fields
+│ Complete & Valid?   │     ──────────────────────►  ┌─────────────────┐
+│                     │                              │ STAGE 5:        │
+└─────────┬───────────┘                              │ Clarification   │
+          │ Yes                                      │                 │
+          │                                          │ - Generate Qs   │
+          │                                          │ - Agent answers │
+          │                                          │ - Update data   │
+          │                                          │ - Re-validate   │
+          │                                          └────────┬────────┘
+          │                                                   │
+          │◄──────────────────────────────────────────────────┘
+          │
+          ▼
+┌──────────────────────────────────────────────────────────────┐
+│              Present to Agent for Review                     │
+│                                                               │
+│  - Show property form with pre-filled data                   │
+│  - Highlight fields with low confidence (<0.8)               │
+│  - Allow edits before saving                                 │
+│  - Show extraction sources (which came from text/images)     │
+└─────────┬────────────────────────────────────────────────────┘
+          │
+          ▼
+┌─────────────────────┐
+│ Agent confirms?     │
+└─────────┬───────────┘
+          │ Yes
+          ▼
+┌──────────────────────────────────────────────────────────────┐
+│              Save to Database                                 │
+│                                                               │
+│  - Insert into properties table                              │
+│  - Insert into subdomain table (rental/sale/...)             │
+│  - Save extraction metadata                                  │
+│  - Link to conversation                                      │
+│  - Audit log                                                 │
+└─────────┬────────────────────────────────────────────────────┘
+          │
+          ▼
+        END
+
+═══════════════════════════════════════════════════════════════════════════════
+                            COST BREAKDOWN
+═══════════════════════════════════════════════════════════════════════════════
+
+SCENARIO 1: Text Only (500 words)
+┌──────────────────────────────────────────┬────────────┬──────────────┐
+│ Operation                                │ Tokens     │ Cost         │
+├──────────────────────────────────────────┼────────────┼──────────────┤
+│ Property type detection (Gemini)         │ 750        │ $0.000056    │
+│ Structured extraction (Gemini)           │ 1,150      │ $0.000236    │
+│ Amenity matching (RAG embeddings)        │ 100        │ $0.000002    │
+│ Validation                               │ 500        │ $0.000068    │
+├──────────────────────────────────────────┼────────────┼──────────────┤
+│ TOTAL per property                       │ ~2,500     │ $0.000362    │
+│ TOTAL per 1000 properties                │ 2.5M       │ $12          │
+└──────────────────────────────────────────┴────────────┴──────────────┘
+
+SCENARIO 2: Text + 5 Images (500 words + 5 photos)
+┌──────────────────────────────────────────┬────────────┬──────────────┐
+│ Operation                                │ Tokens     │ Cost         │
+├──────────────────────────────────────────┼────────────┼──────────────┤
+│ Text extraction (from above)             │ 2,500      │ $0.000362    │
+│ Image analysis (GPT-4o)                  │ 5 images   │ $0.050       │
+│ Image amenity detection                  │ 1,500      │ $0.0009      │
+│ Merge & validation                       │ 500        │ $0.000068    │
+├──────────────────────────────────────────┼────────────┼──────────────┤
+│ TOTAL per property                       │ ~4,500 +   │ $0.051       │
+│ TOTAL per 1000 properties                │ 5 images   │ $150         │
+└──────────────────────────────────────────┴────────────┴──────────────┘
+
+SCENARIO 3: Text + Images + Voice (500 words + 5 photos + 2 min voice)
+┌──────────────────────────────────────────┬────────────┬──────────────┐
+│ Operation                                │ Input      │ Cost         │
+├──────────────────────────────────────────┼────────────┼──────────────┤
+│ Text + images (from above)               │ -          │ $0.051       │
+│ Voice transcription (Whisper)            │ 2 min      │ $0.012       │
+│ Process transcription                    │ 650 tokens │ $0.000362    │
+├──────────────────────────────────────────┼────────────┼──────────────┤
+│ TOTAL per property                       │ -          │ $0.063       │
+│ TOTAL per 1000 properties                │ -          │ $200         │
+└──────────────────────────────────────────┴────────────┴──────────────┘
+
+MONTHLY COST (100 properties/month, text + 5 images):
+  100 × $0.15 = $15/month
+
+COMPARED TO MANUAL ENTRY:
+  Manual: 30-45 min × $20/hr = $10-15 per property
+  LLM-assisted: 5-10 min review × $20/hr + $0.15 API = $2-4 per property
+  SAVINGS: 70-80% reduction in labor costs
+
+═══════════════════════════════════════════════════════════════════════════════
+                            MVP TIMELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+Week 1-2: Phase 1 - Foundation
+  ├─ LangChain agent setup
+  ├─ Property type detection
+  ├─ Structured extraction (rental + sale)
+  ├─ Validation logic
+  ├─ API endpoint
+  └─ Unit tests
+
+Week 3-4: Phase 2 - Image Analysis
+  ├─ Vision model integration (GPT-4o)
+  ├─ Image upload handling
+  ├─ Amenity detection from images
+  ├─ RAG-based amenity matching
+  └─ Image storage (R2)
+
+Week 5: Phase 3 - Multi-Turn Conversation
+  ├─ Conversation state management
+  ├─ Clarification question generation
+  ├─ Iterative refinement
+  └─ Agent correction handling
+
+Week 6: Phase 4 - Voice Input
+  ├─ Voice recording (frontend)
+  ├─ Whisper API integration
+  └─ Voice + text fusion
+
+Week 7-8: Phase 5 - Frontend Integration
+  ├─ Chat interface (SvelteKit 5)
+  ├─ File upload component
+  ├─ Property review form
+  └─ Mobile-responsive design
+
+Week 9-10: Phase 6 - Testing & Optimization
+  ├─ Integration tests
+  ├─ Performance benchmarks
+  ├─ Agent user testing
+  └─ Bug fixes
+
+Week 11: Phase 7 - Production Launch
+  ├─ Production deployment
+  ├─ Monitoring setup
+  ├─ Agent training
+  └─ Gradual rollout
+
+═══════════════════════════════════════════════════════════════════════════════
+                            KEY METRICS
+═══════════════════════════════════════════════════════════════════════════════
+
+TECHNICAL:
+  ✓ Property type detection: >90% accuracy
+  ✓ Required field extraction: >85% accuracy
+  ✓ Amenity detection: >80% accuracy
+  ✓ Processing time: <25s (text + 5 images)
+  ✓ API uptime: >99.9%
+
+BUSINESS:
+  ✓ Agent adoption: >80% of active agents
+  ✓ Time savings: 70-80% vs manual entry
+  ✓ Data quality: <5% correction rate
+  ✓ Cost per property: <$0.20 average
+
+USER EXPERIENCE:
+  ✓ Agent satisfaction: >4/5 rating
+  ✓ Average conversation turns: <3
+  ✓ Completion rate: >95%
+  ✓ Mobile usage: >60%
+
+═══════════════════════════════════════════════════════════════════════════════

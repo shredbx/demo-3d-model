@@ -1,0 +1,62 @@
+{
+  "task_id": "TASK-006",
+  "story_id": "US-001B",
+  "task_type": "test",
+  "branch": "test/TASK-006-US-001B",
+  "timestamps": {
+    "created": "2025-11-06T15:38:18.862801+00:00",
+    "started": null,
+    "last_accessed": "2025-11-06T15:39:41.360720+00:00",
+    "completed": null
+  },
+  "phase": {
+    "current": "PLANNING",
+    "history": []
+  },
+  "domains": [
+    "rbac"
+  ],
+  "agents_used": [],
+  "commits": [],
+  "tests": {
+    "files_created": [],
+    "files_modified": [],
+    "total_tests": 0,
+    "passing": false,
+    "coverage_percentage": 0.0,
+    "coverage_baseline": 80.0,
+    "last_run": null
+  },
+  "quality_gates": {
+    "lint": {
+      "status": "not_run",
+      "last_run": null
+    },
+    "type_check": {
+      "status": "not_run",
+      "errors": 0,
+      "last_run": null
+    },
+    "security_scan": {
+      "status": "not_run",
+      "vulnerabilities": 0,
+      "last_run": null
+    },
+    "acceptance_criteria": {
+      "total": 0,
+      "met": 0,
+      "status": "pending"
+    }
+  },
+  "files_modified": [
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-006/README.md",
+    "/Users/solo/Projects/_repos/bestays/.sdlc-workflow/stories/auth/US-001B-task-breakdown.md"
+  ],
+  "dependencies": {
+    "blocked_by": [],
+    "blocks": [],
+    "status": "unblocked"
+  },
+  "status": "not_started",
+  "notes": ""
+}

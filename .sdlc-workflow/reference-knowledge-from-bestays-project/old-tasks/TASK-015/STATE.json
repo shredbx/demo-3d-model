@@ -1,0 +1,92 @@
+{
+  "task_id": "TASK-015",
+  "story_id": "US-023",
+  "task_type": "feat",
+  "branch": "feat/TASK-015-US-023",
+  "timestamps": {
+    "created": "2025-11-09T08:12:52.628390+00:00",
+    "started": "2025-11-09T10:55:32.536180+00:00",
+    "last_accessed": "2025-11-09T10:55:33.283721+00:00",
+    "completed": null
+  },
+  "phase": {
+    "current": "VALIDATION",
+    "history": [
+      {
+        "phase": "VALIDATION",
+        "started": "2025-11-09T10:55:32.536180+00:00",
+        "completed": "2025-11-09T10:55:32.613832+00:00",
+        "duration_minutes": 0.0
+      }
+    ]
+  },
+  "domains": [
+    "properties"
+  ],
+  "agents_used": [],
+  "commits": [
+    {
+      "sha": "89ee05cecd39eae1948c7366b6540d8177704546",
+      "message": "feat: integrate i18n infrastructure from US-021 for property listing (US-023 TASK-015)",
+      "timestamp": "2025-11-09T10:33:16+00:00",
+      "files_changed": 6
+    },
+    {
+      "sha": "2a1e3a43ea1a258d933041aca5abf0319475e8d3",
+      "message": "feat: implement property listing page with responsive grid (US-023 TASK-015)",
+      "timestamp": "2025-11-09T10:45:41+00:00",
+      "files_changed": 11
+    }
+  ],
+  "tests": {
+    "files_created": [],
+    "files_modified": [],
+    "total_tests": 0,
+    "passing": false,
+    "coverage_percentage": 0.0,
+    "coverage_baseline": 80.0,
+    "last_run": null
+  },
+  "quality_gates": {
+    "lint": {
+      "status": "not_run",
+      "last_run": null
+    },
+    "type_check": {
+      "status": "not_run",
+      "errors": 0,
+      "last_run": null
+    },
+    "security_scan": {
+      "status": "not_run",
+      "vulnerabilities": 0,
+      "last_run": null
+    },
+    "acceptance_criteria": {
+      "total": 0,
+      "met": 0,
+      "status": "pending"
+    }
+  },
+  "files_modified": [
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-015/README.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-015/planning/frontend-implementation-spec.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-015/planning/i18n-infrastructure-spec.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-015/subagent-instructions-i18n.md",
+    "/Users/solo/Projects/_repos/bestays/apps/frontend/src/routes/+page.svelte",
+    "/Users/solo/Projects/_repos/bestays/apps/frontend/src/lib/types/property.ts",
+    "/Users/solo/Projects/_repos/bestays/apps/frontend/src/lib/components/PropertyCard.svelte",
+    "/Users/solo/Projects/_repos/bestays/apps/frontend/src/lib/components/PropertyCardSkeleton.svelte",
+    "/Users/solo/Projects/_repos/bestays/apps/frontend/src/routes/[lang]/properties/+page.ts",
+    "/Users/solo/Projects/_repos/bestays/apps/frontend/src/routes/[lang]/properties/+page.svelte",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-015/implementation/implementation-report.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-015/COMPLETION-SUMMARY.md"
+  ],
+  "dependencies": {
+    "blocked_by": [],
+    "blocks": [],
+    "status": "unblocked"
+  },
+  "status": "completed",
+  "notes": ""
+}

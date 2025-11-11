@@ -1,0 +1,75 @@
+{
+  "task_id": "TASK-014",
+  "story_id": "US-023",
+  "task_type": "feat",
+  "branch": "feat/TASK-014-US-023",
+  "timestamps": {
+    "created": "2025-11-09T07:30:05.864001+00:00",
+    "started": "2025-11-09T10:55:31.130084+00:00",
+    "last_accessed": "2025-11-09T10:55:31.861992+00:00",
+    "completed": null
+  },
+  "phase": {
+    "current": "VALIDATION",
+    "history": [
+      {
+        "phase": "VALIDATION",
+        "started": "2025-11-09T10:55:31.130084+00:00",
+        "completed": "2025-11-09T10:55:31.209746+00:00",
+        "duration_minutes": 0.0
+      }
+    ]
+  },
+  "domains": [
+    "properties"
+  ],
+  "agents_used": [],
+  "commits": [],
+  "tests": {
+    "files_created": [],
+    "files_modified": [],
+    "total_tests": 0,
+    "passing": false,
+    "coverage_percentage": 0.0,
+    "coverage_baseline": 80.0,
+    "last_run": null
+  },
+  "quality_gates": {
+    "lint": {
+      "status": "not_run",
+      "last_run": null
+    },
+    "type_check": {
+      "status": "not_run",
+      "errors": 0,
+      "last_run": null
+    },
+    "security_scan": {
+      "status": "not_run",
+      "vulnerabilities": 0,
+      "last_run": null
+    },
+    "acceptance_criteria": {
+      "total": 0,
+      "met": 0,
+      "status": "pending"
+    }
+  },
+  "files_modified": [
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-014/README.md",
+    "/Users/solo/Projects/_repos/bestays/apps/server/app/scripts/import_live_properties.py",
+    "/Users/solo/Projects/_repos/bestays/apps/server/app/scripts/import_sample_properties.py",
+    "/Users/solo/Projects/_repos/bestays/apps/server/app/scripts/README_PROPERTY_IMPORT.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-014/implementation/property-import-script-report.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-014/QUICKSTART.md",
+    "/Users/solo/Projects/_repos/bestays/apps/server/app/scripts/insert_properties_direct.py",
+    "/Users/solo/Projects/_repos/bestays/apps/server/app/scripts/insert_properties.sql"
+  ],
+  "dependencies": {
+    "blocked_by": [],
+    "blocks": [],
+    "status": "unblocked"
+  },
+  "status": "completed",
+  "notes": ""
+}

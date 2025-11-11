@@ -1,0 +1,61 @@
+{
+  "task_id": "TASK-004",
+  "story_id": "US-001B",
+  "task_type": "feat",
+  "branch": "feat/TASK-004-US-001B",
+  "timestamps": {
+    "created": "2025-11-06T15:37:06.843902+00:00",
+    "started": null,
+    "last_accessed": "2025-11-06T15:37:36.199636+00:00",
+    "completed": null
+  },
+  "phase": {
+    "current": "PLANNING",
+    "history": []
+  },
+  "domains": [
+    "rbac"
+  ],
+  "agents_used": [],
+  "commits": [],
+  "tests": {
+    "files_created": [],
+    "files_modified": [],
+    "total_tests": 0,
+    "passing": false,
+    "coverage_percentage": 0.0,
+    "coverage_baseline": 80.0,
+    "last_run": null
+  },
+  "quality_gates": {
+    "lint": {
+      "status": "not_run",
+      "last_run": null
+    },
+    "type_check": {
+      "status": "not_run",
+      "errors": 0,
+      "last_run": null
+    },
+    "security_scan": {
+      "status": "not_run",
+      "vulnerabilities": 0,
+      "last_run": null
+    },
+    "acceptance_criteria": {
+      "total": 0,
+      "met": 0,
+      "status": "pending"
+    }
+  },
+  "files_modified": [
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-004/README.md"
+  ],
+  "dependencies": {
+    "blocked_by": [],
+    "blocks": [],
+    "status": "unblocked"
+  },
+  "status": "not_started",
+  "notes": ""
+}

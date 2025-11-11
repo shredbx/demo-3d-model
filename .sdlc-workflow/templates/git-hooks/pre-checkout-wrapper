@@ -1,0 +1,88 @@
+#!/bin/bash
+#
+# Git Branch Validation Wrapper
+#
+# NOTE: Git does not have a native "pre-checkout" hook.
+# This is a manual wrapper to validate branch names before creation.
+#
+# Usage:
+#   Instead of: git checkout -b feat/TASK-001-US-001
+#   Use:        ./pre-checkout-wrapper -b feat/TASK-001-US-001
+#
+# The wrapper will:
+# 1. Validate the branch name using validate_branch.py
+# 2. If valid, execute git checkout -b <branch>
+# 3. If invalid, show error and abort
+#
+# Why use this?
+# - For manual git operations outside Claude Code
+# - When you want local validation before creating branches
+# - As a safety net alongside Claude hooks
+#
+# Primary validation:
+# - Claude hooks (.claude/hooks/pre_tool_use.py) are the primary enforcement
+# - This wrapper is optional for direct git usage
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Path to validation script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+VALIDATE_SCRIPT="$REPO_ROOT/.sdlc-workflow/scripts/validate_branch.py"
+
+# Check if validation script exists
+if [ ! -f "$VALIDATE_SCRIPT" ]; then
+    echo -e "${RED}❌ Error: Validation script not found: $VALIDATE_SCRIPT${NC}" >&2
+    exit 2
+fi
+
+# Parse arguments (similar to git checkout)
+# Supports: -b <branch>, --branch <branch>
+BRANCH_NAME=""
+CREATE_BRANCH=false
+REMAINING_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -b|--branch)
+            CREATE_BRANCH=true
+            BRANCH_NAME="$2"
+            shift 2
+            ;;
+        *)
+            REMAINING_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# If not creating a branch, just pass through to git
+if [ "$CREATE_BRANCH" = false ]; then
+    echo -e "${YELLOW}⚠️  Not creating a new branch - passing through to git${NC}"
+    exec git checkout "${REMAINING_ARGS[@]}"
+fi
+
+# Validate branch name
+echo "🔍 Validating branch name: $BRANCH_NAME"
+
+if "$VALIDATE_SCRIPT" "$BRANCH_NAME" >/dev/null 2>&1; then
+    echo -e "${GREEN}✅ Branch name valid${NC}"
+
+    # Execute git checkout -b
+    echo "🚀 Creating branch: $BRANCH_NAME"
+    exec git checkout -b "$BRANCH_NAME" "${REMAINING_ARGS[@]}"
+else
+    # Validation failed - show error from script
+    echo -e "${RED}❌ Branch name validation failed${NC}"
+    echo ""
+    "$VALIDATE_SCRIPT" "$BRANCH_NAME" || true
+    echo ""
+    echo -e "${YELLOW}💡 Tip: See .sdlc-workflow/GIT_WORKFLOW.md for branch naming conventions${NC}"
+    exit 1
+fi

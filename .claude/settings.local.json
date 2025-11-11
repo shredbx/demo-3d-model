@@ -1,0 +1,169 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Bash(git:*)",
+      "Bash(make:*)",
+      "Bash(npm:*)",
+      "Bash(pnpm:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(alembic:*)",
+      "Bash(pytest:*)",
+      "Bash(python:*)",
+      "Bash(node:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)",
+      "Bash(chmod:*)",
+      "Bash(echo:*)",
+      "Bash(cd:*)",
+      "Bash(pwd:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)",
+      "Bash(tar:*)",
+      "Bash(unzip:*)",
+      "Bash(sed:*)",
+      "Bash(awk:*)",
+      "Bash(psql:*)",
+      "Bash(mysql:*)",
+      "Bash(redis-cli:*)",
+      "TodoWrite",
+      "Task(*)",
+      "SlashCommand(*)",
+      "NotebookEdit(*)",
+      "AskUserQuestion",
+      "Skill(*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "mcp__svelte__*",
+      "mcp__context7__*",
+      "mcp__memory__*",
+      "Bash(python3:*)",
+      "mcp__memory__search_nodes",
+      "WebFetch(domain:developers.cloudflare.com)",
+      "mcp__memory__create_entities",
+      "mcp__memory__open_nodes",
+      "Skill(docs-stories)"
+    ],
+    "ask": [
+      "Bash(sudo:*)",
+      "Bash(apt:*)",
+      "Bash(apt-get:*)",
+      "Bash(pip:*)",
+      "Bash(pip3:*)",
+      "Bash(npm install:*)",
+      "Bash(pnpm install:*)",
+      "Write(**/.env*)",
+      "Edit(**/.env*)",
+      "Write(**/package.json)",
+      "Edit(**/package.json)",
+      "Write(**/package-lock.json)",
+      "Edit(**/package-lock.json)",
+      "Write(**/pyproject.toml)",
+      "Edit(**/pyproject.toml)",
+      "Write(**/requirements*.txt)",
+      "Edit(**/requirements*.txt)",
+      "Write(**/docker-compose*.yml)",
+      "Edit(**/docker-compose*.yml)",
+      "Write(**/Dockerfile*)",
+      "Edit(**/Dockerfile*)",
+      "Write(**/Makefile)",
+      "Edit(**/Makefile)",
+      "Write(**/.claude/settings*.json)",
+      "Edit(**/.claude/settings*.json)",
+      "Write(**/.claude.json)",
+      "Edit(**/.claude.json)",
+      "Write(**/.git/config)",
+      "Edit(**/.git/config)",
+      "Write(**/alembic/versions/*.py)",
+      "Edit(**/alembic/versions/*.py)",
+      "Write(**/.gitignore)",
+      "Edit(**/.gitignore)",
+      "Bash(rm:*)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+"cloudflare",
+    "sequential-thinking",
+    "memory",
+    "playwright",
+    "svelte",
+    "context7",
+    "magic"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session_start.py"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate_command.py"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/sdlc_guardian.py"
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre_tool_use.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post_tool_use.py"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/subagent_stop.py"
+          }
+        ]
+      }
+    ]
+  }
+}

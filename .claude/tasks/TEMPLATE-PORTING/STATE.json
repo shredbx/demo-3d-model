@@ -1,0 +1,17 @@
+{
+  "task_id": "{task_id}",
+  "task_number": "{task_number}",
+  "semantic_name": "{semantic_name}",
+  "type": "PORTING",
+  "story": "{story_id}",
+  "source_product": "{source_product}",
+  "target_product": "{target_product}",
+  "source_task": "{source_task_id}",
+  "status": "NOT_STARTED",
+  "phase": "RESEARCH",
+  "created": "{date}",
+  "updated": "{date}",
+  "commits": [],
+  "files_modified": [],
+  "subagents_used": []
+}

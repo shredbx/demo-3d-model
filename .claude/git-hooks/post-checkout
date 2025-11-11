@@ -1,0 +1,37 @@
+#!/bin/bash
+# post-checkout - Auto-detect task switches based on branch name
+
+# $1 = previous HEAD, $2 = new HEAD, $3 = branch checkout (1) or file checkout (0)
+PREV_HEAD=$1
+NEW_HEAD=$2
+IS_BRANCH_CHECKOUT=$3
+
+# Only run for branch checkouts
+if [ "$IS_BRANCH_CHECKOUT" != "1" ]; then
+    exit 0
+fi
+
+# Get project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+# Get current branch name
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+# Check if branch name contains TASK-XXX pattern
+if echo "$BRANCH_NAME" | grep -qE "TASK-[0-9]{3}"; then
+    # Extract TASK-XXX from branch name
+    TASK_ID=$(echo "$BRANCH_NAME" | grep -oE "TASK-[0-9]{3}" | head -1)
+
+    # Check if task exists
+    TASK_DIR="$PROJECT_ROOT/.claude/tasks/$TASK_ID"
+    if [ -d "$TASK_DIR" ]; then
+        # Update current.txt
+        echo "$TASK_ID" > "$PROJECT_ROOT/.claude/tasks/current.txt"
+        echo "✓ Switched to task: $TASK_ID"
+    fi
+else
+    # No TASK-XXX in branch name, clear current task
+    echo "none" > "$PROJECT_ROOT/.claude/tasks/current.txt"
+fi
+
+exit 0

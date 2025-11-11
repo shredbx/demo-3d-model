@@ -1,0 +1,15 @@
+# Evidence Artifacts
+
+Store supporting materials here:
+- Screenshots (before/after)
+- Log files
+- Test results
+- Performance benchmarks
+- Error messages
+- Any other evidence of work done
+
+Organize in subdirectories as needed:
+- screenshots/
+- logs/
+- test-results/
+- etc.

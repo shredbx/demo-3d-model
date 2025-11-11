@@ -1,0 +1,65 @@
+#!/bin/bash
+# prepare-commit-msg - Auto-format commit messages with conventional commits
+
+# Exit on error
+set -e
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA=$3
+
+# Skip if this is a merge, squash, or commit --amend
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "squash" ]; then
+    exit 0
+fi
+
+# Get project root (where .claude/ exists)
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+# Get current task ID
+CURRENT_FILE="$PROJECT_ROOT/.claude/tasks/current.txt"
+if [ ! -f "$CURRENT_FILE" ]; then
+    # No current task, allow commit without task/story IDs
+    exit 0
+fi
+
+TASK_ID=$(cat "$CURRENT_FILE" | tr -d '[:space:]')
+if [ -z "$TASK_ID" ] || [ "$TASK_ID" = "none" ]; then
+    # No active task
+    exit 0
+fi
+
+# Read STATE.json to get story ID
+STATE_FILE="$PROJECT_ROOT/.claude/tasks/$TASK_ID/STATE.json"
+if [ ! -f "$STATE_FILE" ]; then
+    # STATE.json not found, can't get story ID
+    exit 0
+fi
+
+# Extract story_id from STATE.json
+STORY_ID=$(grep -o '"story_id": *"[^"]*"' "$STATE_FILE" | cut -d'"' -f4)
+if [ -z "$STORY_ID" ]; then
+    # No story ID found
+    exit 0
+fi
+
+# Read current commit message
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Skip if message already has task/story IDs
+if echo "$COMMIT_MSG" | grep -q "\[TASK-[0-9]\{3\}/US-[0-9]\{3\}\]"; then
+    exit 0
+fi
+
+# Check if message follows conventional commits format
+# Format: type(scope): message
+if echo "$COMMIT_MSG" | grep -qE "^(feat|fix|docs|style|refactor|perf|test|chore)(\([a-z-]+\))?: .+"; then
+    # Already has conventional format, just append task/story IDs
+    echo "${COMMIT_MSG} [TASK-${TASK_ID}/US-${STORY_ID}]" > "$COMMIT_MSG_FILE"
+else
+    # Doesn't have conventional format - leave as-is but append IDs
+    # (User should fix manually or we can suggest format)
+    echo "${COMMIT_MSG} [TASK-${TASK_ID}/US-${STORY_ID}]" > "$COMMIT_MSG_FILE"
+fi
+
+exit 0

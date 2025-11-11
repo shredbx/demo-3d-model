@@ -1,0 +1,56 @@
+{
+  "mcpServers": {
+"cloudflare": {
+			"command": "npx",
+			"args": ["mcp-remote", "https://bindings.mcp.cloudflare.com/mcp"]
+		},
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ]
+    },
+    "svelte": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@sveltejs/mcp"
+      ],
+      "env": {}
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "ctx7sk-8b40e742-e71d-4909-8abc-b4a391276923"
+      }
+    },
+    "magic": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@21st-dev/magic@latest"
+      ],
+      "env": {
+        "API_KEY": "b01bfdaeb4cd3df87086e48ca13c4371bbef1d1eb2993c996803e62332f3db33"
+      }
+    }
+  }
+}

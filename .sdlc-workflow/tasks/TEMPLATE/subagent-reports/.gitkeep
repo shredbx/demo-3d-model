@@ -1,0 +1,11 @@
+# Subagent Reports
+
+Save subagent outputs here with naming convention:
+- `[subagent-name]-report-[timestamp].md`
+- Example: `backend-report-2025-11-06-1030.md`
+
+Include:
+- Full subagent output
+- Files modified
+- Any warnings or errors
+- Recommendations from subagent

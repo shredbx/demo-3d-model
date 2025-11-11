@@ -1,0 +1,87 @@
+{
+  "task_id": "TASK-012",
+  "story_id": "US-022",
+  "task_type": "feat",
+  "branch": "feat/TASK-012-US-022",
+  "timestamps": {
+    "created": "2025-11-08T19:43:55.723406+00:00",
+    "started": "2025-11-08T20:00:59.243061+00:00",
+    "last_accessed": "2025-11-08T20:33:11.070538+00:00",
+    "completed": null
+  },
+  "phase": {
+    "current": "RESEARCH",
+    "history": [
+      {
+        "phase": "RESEARCH",
+        "started": "2025-11-08T20:00:59.243061+00:00",
+        "completed": "2025-11-08T20:09:16.890038+00:00",
+        "duration_minutes": 8.29
+      }
+    ]
+  },
+  "domains": [
+    "properties"
+  ],
+  "agents_used": [],
+  "commits": [
+    {
+      "sha": "73b3e7da540bf0f050a654e8ff67e42c7ab140ed",
+      "message": "docs: establish chat-driven UI architecture and inline editing pattern (US-022 TASK-012)",
+      "timestamp": "2025-11-08T19:51:50+00:00",
+      "files_changed": 3
+    },
+    {
+      "sha": "d5250ce5895f2ef167baf27c574df1d1b5de4b53",
+      "message": "docs: add semantic search and pgvector+RAG architecture (US-022 TASK-012)",
+      "timestamp": "2025-11-08T19:58:48+00:00",
+      "files_changed": 3
+    }
+  ],
+  "tests": {
+    "files_created": [],
+    "files_modified": [],
+    "total_tests": 0,
+    "passing": false,
+    "coverage_percentage": 0.0,
+    "coverage_baseline": 80.0,
+    "last_run": null
+  },
+  "quality_gates": {
+    "lint": {
+      "status": "not_run",
+      "last_run": null
+    },
+    "type_check": {
+      "status": "not_run",
+      "errors": 0,
+      "last_run": null
+    },
+    "security_scan": {
+      "status": "not_run",
+      "vulnerabilities": 0,
+      "last_run": null
+    },
+    "acceptance_criteria": {
+      "total": 0,
+      "met": 0,
+      "status": "pending"
+    }
+  },
+  "files_modified": [
+    "/Users/solo/Projects/_repos/bestays/.sdlc-workflow/guides/chat-driven-ui-architecture.md",
+    "/Users/solo/Projects/_repos/bestays/.sdlc-workflow/stories/properties/US-022-properties-ai-creation-management.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-012/context/architectural-vision.md",
+    "/Users/solo/Projects/_repos/bestays/.sdlc-workflow/guides/semantic-search-architecture.md",
+    "/Users/solo/Projects/_repos/bestays/.sdlc-workflow/guides/pgvector-rag-architecture.md",
+    "/Users/solo/Projects/_repos/bestays/.claude/tasks/TASK-012/research/agent-report.md",
+    "/Users/solo/Projects/_repos/bestays/.sdlc-workflow/stories/properties/US-023-properties-display-localized.md"
+  ],
+  "dependencies": {
+    "blocked_by": [],
+    "blocks": [],
+    "status": "unblocked"
+  },
+  "status": "in_progress",
+  "notes": ""
+}

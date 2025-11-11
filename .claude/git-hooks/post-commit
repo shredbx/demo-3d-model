@@ -1,0 +1,38 @@
+#!/bin/bash
+# post-commit - Track commits in commit-task-map.csv
+
+# Exit on error (but don't block commit)
+set +e
+
+# Get project root
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+# Get current task ID
+CURRENT_FILE="$PROJECT_ROOT/.claude/tasks/current.txt"
+if [ ! -f "$CURRENT_FILE" ]; then
+    exit 0
+fi
+
+TASK_ID=$(cat "$CURRENT_FILE" | tr -d '[:space:]')
+if [ -z "$TASK_ID" ] || [ "$TASK_ID" = "none" ]; then
+    exit 0
+fi
+
+# Get commit info
+COMMIT_SHA=$(git rev-parse HEAD)
+COMMIT_MSG=$(git log -1 --format=%s)
+COMMIT_TIME=$(git log -1 --format=%ai)
+
+# Create or append to commit-task-map.csv
+MAP_FILE="$PROJECT_ROOT/.claude/tasks/commit-task-map.csv"
+
+# Create header if file doesn't exist
+if [ ! -f "$MAP_FILE" ]; then
+    echo "commit_sha,task_id,commit_message,timestamp" > "$MAP_FILE"
+fi
+
+# Append commit mapping (escape commas in message)
+ESCAPED_MSG=$(echo "$COMMIT_MSG" | sed 's/,/;/g')
+echo "$COMMIT_SHA,$TASK_ID,$ESCAPED_MSG,$COMMIT_TIME" >> "$MAP_FILE"
+
+exit 0

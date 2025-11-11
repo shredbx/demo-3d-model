@@ -1,0 +1,59 @@
+{
+  "task_id": "TASK-009",
+  "story_id": "US-021",
+  "task_type": "feat",
+  "branch": "feat/TASK-009-US-021",
+  "timestamps": {
+    "created": "2025-11-08T08:27:39.987873+00:00",
+    "started": null,
+    "last_accessed": "2025-11-08T08:27:39.987873+00:00",
+    "completed": null
+  },
+  "phase": {
+    "current": "PLANNING",
+    "history": []
+  },
+  "domains": [
+    "locale"
+  ],
+  "agents_used": [],
+  "commits": [],
+  "tests": {
+    "files_created": [],
+    "files_modified": [],
+    "total_tests": 0,
+    "passing": false,
+    "coverage_percentage": 0.0,
+    "coverage_baseline": 80.0,
+    "last_run": null
+  },
+  "quality_gates": {
+    "lint": {
+      "status": "not_run",
+      "last_run": null
+    },
+    "type_check": {
+      "status": "not_run",
+      "errors": 0,
+      "last_run": null
+    },
+    "security_scan": {
+      "status": "not_run",
+      "vulnerabilities": 0,
+      "last_run": null
+    },
+    "acceptance_criteria": {
+      "total": 0,
+      "met": 0,
+      "status": "pending"
+    }
+  },
+  "files_modified": [],
+  "dependencies": {
+    "blocked_by": [],
+    "blocks": [],
+    "status": "unblocked"
+  },
+  "status": "not_started",
+  "notes": ""
+}

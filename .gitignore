@@ -1,0 +1,111 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Patternbook generated docs
+@patternbook
+**__pycache__/
+
+# Build outputs
+.idea
+.vscode
+.cursor
+.vercel
+.env*.local
+dist/
+**/dist/
+build/
+**/build/
+docs/brainstorm
+node_modules
+.pnp
+.pnp.*
+.turbo
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dev-debug.log
+
+# Testing
+coverage
+coverage.xml
+.coverage
+htmlcov/
+.pytest_cache/
+.venv
+# Next.js
+.next/
+out/
+
+# Production
+build
+
+# Misc
+.DS_Store
+*.pem
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Debug
+logs
+*.log
+
+# Environment files
+.env*.local
+.env
+.env.shared
+.env.bestays
+.env.realestate
+
+# Credentials (test users, API keys, sensitive data)
+.claude/credentials/
+.claude/memory/test-credentials.md
+.claude/memory/*credentials*
+.claude/memory/*password*
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Scrap files
+scrap-ex*
+
+# Task files (commented out - kept for reference)
+
+# Logs
+# Dependency directories
+node_modules/
+# Environment variables
+# Editor directories and files
+# OS specific
+
+# Task files
+# tasks.json
+# tasks/
+
+# PatternBook temporary artifacts (following artifact-policy.md)
+.sdlc-workflow/tmp/
+
+# Playwright MCP temporary files
+.playwright-mcp/
+
+# Playwright test artifacts
+**/playwright-report/
+**/test-results/
+**/.playwright/
+**/playwright/.cache/
+
+# Test screenshots and videos
+**/screenshots/
+**/videos/
+
+# Local task state (not version controlled)
+.claude/tasks/current.txt
+.claude/tasks/commit-task-map.csv
