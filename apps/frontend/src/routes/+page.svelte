@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import * as THREE from 'three';
 	import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 	import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -61,13 +63,36 @@
 		}
 	};
 
-	// Current selected style
+	// Mapping between URL-friendly names and internal model IDs
+	const MODEL_URL_MAP: Record<string, string> = {
+		style1: 'ktm',
+		style2: 'ducati',
+		style3: 'suzuki',
+		style4: 'yamaha'
+	};
+
+	const URL_MODEL_MAP: Record<string, 'style1' | 'style2' | 'style3' | 'style4'> = {
+		ktm: 'style1',
+		ducati: 'style2',
+		suzuki: 'style3',
+		yamaha: 'style4'
+	};
+
+	// Current selected style - initialized from URL or default
 	let currentStyle = $state<'style1' | 'style2' | 'style3' | 'style4'>('style1');
 	let currentModel: any = null; // Store current loaded model
 	let scene: THREE.Scene;
 	let camera: THREE.PerspectiveCamera;
 	let renderer: THREE.WebGLRenderer;
 	let controls: OrbitControls;
+
+	// Read model from URL parameter and update currentStyle
+	$effect(() => {
+		const modelParam = $page.url.searchParams.get('model');
+		if (modelParam && URL_MODEL_MAP[modelParam]) {
+			currentStyle = URL_MODEL_MAP[modelParam];
+		}
+	});
 
 	// Function to load a model with per-model configuration
 	function loadModel(modelPath: string, config: any) {
@@ -292,6 +317,11 @@
 	}
 
 	onMount(() => {
+		// Set default model in URL if not present
+		if (!$page.url.searchParams.get('model')) {
+			goto('?model=ktm', { replaceState: true });
+		}
+
 		// Scene setup
 		scene = new THREE.Scene();
 		scene.background = new THREE.Color(0x2a2a2a); // Dark gray garage
@@ -426,11 +456,7 @@
 			<button
 				class="style-btn"
 				class:active={currentStyle === 'style1'}
-				onclick={() => {
-					console.log('🖱️ Button clicked! Previous:', currentStyle);
-					currentStyle = 'style1';
-					console.log('🖱️ Button clicked! New:', currentStyle);
-				}}
+				onclick={() => goto('?model=ktm', { replaceState: false })}
 				title={MODELS.style1.description}
 			>
 				🏍️ KTM Dirt Bike
@@ -438,11 +464,7 @@
 			<button
 				class="style-btn"
 				class:active={currentStyle === 'style2'}
-				onclick={() => {
-					console.log('🖱️ Button clicked! Previous:', currentStyle);
-					currentStyle = 'style2';
-					console.log('🖱️ Button clicked! New:', currentStyle);
-				}}
+				onclick={() => goto('?model=ducati', { replaceState: false })}
 				title={MODELS.style2.description}
 			>
 				🏍️ Ducati Streetfighter
@@ -450,11 +472,7 @@
 			<button
 				class="style-btn"
 				class:active={currentStyle === 'style3'}
-				onclick={() => {
-					console.log('🖱️ Button clicked! Previous:', currentStyle);
-					currentStyle = 'style3';
-					console.log('🖱️ Button clicked! New:', currentStyle);
-				}}
+				onclick={() => goto('?model=suzuki', { replaceState: false })}
 				title={MODELS.style3.description}
 			>
 				🏍️ Suzuki GSX 750
@@ -462,11 +480,7 @@
 			<button
 				class="style-btn"
 				class:active={currentStyle === 'style4'}
-				onclick={() => {
-					console.log('🖱️ Button clicked! Previous:', currentStyle);
-					currentStyle = 'style4';
-					console.log('🖱️ Button clicked! New:', currentStyle);
-				}}
+				onclick={() => goto('?model=yamaha', { replaceState: false })}
 				title={MODELS.style4.description}
 			>
 				🏍️ Yamaha Cruiser

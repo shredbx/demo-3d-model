@@ -36,6 +36,6 @@ declare module "$app/types" {
 		};
 		Pathname(): "/";
 		ResolvedPathname(): `${"" | `/${string}`}${ReturnType<AppTypes['Pathname']>}`;
-		Asset(): "/models/ktm-dirt-bike.glb" | "/models/style-2.glb" | "/models/style-3.glb" | "/models/test-model.glb" | string & {};
+		Asset(): "/models/ducati-streetfighter.glb" | "/models/ktm-dirt-bike.glb" | "/models/suzuki-gsx-750.glb" | "/models/test-model.glb" | "/models/yamaha-stryker.glb" | string & {};
 	}
 }
