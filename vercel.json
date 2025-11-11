@@ -4,5 +4,10 @@
   "devCommand": "cd apps/frontend && npm run dev",
   "installCommand": "cd apps/frontend && npm install",
   "framework": null,
-  "outputDirectory": "apps/frontend/build"
+  "outputDirectory": "apps/frontend/build",
+  "functions": {
+    "apps/frontend/**/*": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
