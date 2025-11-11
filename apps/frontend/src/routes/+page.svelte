@@ -177,9 +177,9 @@
 					// KTM: Use original positioning (no ground adjustment)
 					// Just apply the config offsets directly
 				} else if (modelPath.includes('ducati') || modelPath.includes('suzuki') || modelPath.includes('yamaha')) {
-					// Ducati, Suzuki, Yamaha: Apply half ground adjustment
-					// They were sinking before, now too high, so use halfway point
-					model.position.y = -minY / 2;
+					// Ducati, Suzuki, Yamaha: Apply adjusted ground positioning
+					// Lower them a bit more (they were still slightly floating)
+					model.position.y = -minY / 3;
 				}
 
 				// Apply additional position offset from config
@@ -239,6 +239,57 @@
 			console.log('❌ Skipping model load - condition not met');
 		}
 	});
+
+	// Camera adjustment function for control buttons
+	function adjustCamera(action: string) {
+		if (!camera || !controls) return;
+
+		const rotationSpeed = 0.2;
+
+		switch (action) {
+			case 'rotateLeft':
+				camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationSpeed);
+				break;
+			case 'rotateRight':
+				camera.position.applyAxisAngle(new THREE.Vector3(0, 1, 0), -rotationSpeed);
+				break;
+			case 'rotateUp': {
+				// Rotate camera position around X-axis (pitch rotation) to look down at model
+				const axis = new THREE.Vector3(1, 0, 0);
+				const position = camera.position.clone();
+
+				// Rotate around X-axis in world space
+				const quaternion = new THREE.Quaternion();
+				quaternion.setFromAxisAngle(axis, rotationSpeed);
+				position.applyQuaternion(quaternion);
+
+				camera.position.copy(position);
+				break;
+			}
+			case 'rotateDown': {
+				// Rotate camera position around X-axis (pitch rotation) to look up at model
+				const axis = new THREE.Vector3(1, 0, 0);
+				const position = camera.position.clone();
+
+				// Rotate around X-axis in world space
+				const quaternion = new THREE.Quaternion();
+				quaternion.setFromAxisAngle(axis, -rotationSpeed);
+				position.applyQuaternion(quaternion);
+
+				camera.position.copy(position);
+				break;
+			}
+			case 'zoomIn':
+				camera.position.multiplyScalar(0.9); // Move closer
+				break;
+			case 'zoomOut':
+				camera.position.multiplyScalar(1.1); // Move farther
+				break;
+		}
+
+		camera.lookAt(0, 0, 0);
+		controls.update();
+	}
 
 	onMount(() => {
 		// Scene setup
@@ -437,8 +488,39 @@
 		-->
 	</div>
 
-	<!-- Three.js Canvas -->
-	<canvas bind:this={canvas} data-testid="model-canvas" />
+	<!-- Viewer Container: Controls + Canvas -->
+	<div class="viewer-container">
+		<!-- Camera Controls (left side of canvas) -->
+		<div class="camera-controls">
+			<div class="control-group">
+				<button class="control-btn" onclick={() => adjustCamera('rotateLeft')} title="Rotate Left">
+					←
+				</button>
+				<button class="control-btn" onclick={() => adjustCamera('rotateRight')} title="Rotate Right">
+					→
+				</button>
+			</div>
+			<div class="control-group">
+				<button class="control-btn" onclick={() => adjustCamera('rotateUp')} title="Rotate Up">
+					↑
+				</button>
+				<button class="control-btn" onclick={() => adjustCamera('rotateDown')} title="Rotate Down">
+					↓
+				</button>
+			</div>
+			<div class="control-group">
+				<button class="control-btn" onclick={() => adjustCamera('zoomIn')} title="Zoom In">
+					+
+				</button>
+				<button class="control-btn" onclick={() => adjustCamera('zoomOut')} title="Zoom Out">
+					−
+				</button>
+			</div>
+		</div>
+
+		<!-- Three.js Canvas -->
+		<canvas bind:this={canvas} data-testid="model-canvas" />
+	</div>
 
 	<!-- Loading indicator positioned over canvas -->
 	{#if loading}
@@ -555,9 +637,63 @@
 		box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 	}
 
+	.viewer-container {
+		position: absolute;
+		top: 40%;
+		left: 50%;
+		transform: translateX(-50%);
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		z-index: 10;
+	}
+
+	.camera-controls {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		z-index: 20;
+	}
+
+	.control-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		background: rgba(0, 0, 0, 0.7);
+		padding: 0.5rem;
+		border-radius: 8px;
+		border: 1px solid rgba(0, 212, 255, 0.3);
+	}
+
+	.control-btn {
+		width: 40px;
+		height: 40px;
+		background: rgba(0, 0, 0, 0.8);
+		border: 2px solid rgba(0, 212, 255, 0.4);
+		border-radius: 6px;
+		color: #00d4ff;
+		font-size: 1.2rem;
+		font-weight: bold;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.control-btn:hover {
+		background: rgba(0, 212, 255, 0.2);
+		border-color: #00d4ff;
+		transform: scale(1.05);
+	}
+
+	.control-btn:active {
+		transform: scale(0.95);
+	}
+
 	.loading-overlay {
 		position: absolute;
-		top: 40%; /* Match canvas position */
+		top: 40%;
 		left: 50%;
 		transform: translateX(-50%);
 		width: 800px;
@@ -567,10 +703,11 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 10; /* Above canvas */
-		background: rgba(42, 42, 42, 0.95); /* Match dark garage background with slight transparency */
+		z-index: 30;
+		background: rgba(42, 42, 42, 0.95);
 		border-radius: 12px;
 		pointer-events: none;
+		border: 2px solid rgba(0, 212, 255, 0.3);
 	}
 
 	.loading {
@@ -644,17 +781,13 @@
 	}
 
 	canvas {
-		position: absolute;
-		top: 40%;
-		left: 50%;
-		transform: translateX(-50%);
 		width: 800px;
 		height: 600px;
 		max-width: 90vw;
 		max-height: 50vh;
-		z-index: 1;
 		border-radius: 12px;
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+		border: 2px solid rgba(0, 212, 255, 0.3);
 	}
 
 	.gradient-overlay {
@@ -690,15 +823,25 @@
 			font-size: clamp(1rem, 2.5vw, 1.5rem);
 		}
 
-		canvas {
+		.viewer-container {
 			top: 35%;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		canvas {
 			width: 95vw;
 			height: 60vh;
 			max-height: 500px;
 		}
 
+		.camera-controls {
+			flex-direction: row;
+			gap: 0.75rem;
+		}
+
 		.loading-overlay {
-			top: 35%; /* Match mobile canvas position */
+			top: 35%;
 			width: 95vw;
 			height: 60vh;
 			max-height: 500px;
@@ -717,6 +860,12 @@
 		.controls-hint {
 			flex-direction: column;
 			gap: 0.5rem;
+		}
+
+		.control-btn {
+			width: 36px;
+			height: 36px;
+			font-size: 1rem;
 		}
 	}
 </style>
